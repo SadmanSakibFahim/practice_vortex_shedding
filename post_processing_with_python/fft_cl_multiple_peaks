@@ -1,0 +1,41 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
+
+data = np.loadtxt("cl_vs_time.txt", skiprows=0)
+time = data[:, 2]
+cl = data[:, 1]
+
+cl_detrended = cl - np.mean(cl)
+dt = time[1] - time[0]
+Fs = 1 / dt
+n = len(cl)
+
+
+cl_fft = np.fft.fft(cl_detrended)
+freqs = np.fft.fftfreq(n, d=dt)
+magnitude = np.abs(cl_fft[:n // 2])
+freqs = freqs[:n // 2]
+peaks, _ = find_peaks(magnitude, height=np.max(magnitude) * 0.1, distance=5)
+dominant_freqs = freqs[peaks]
+amplitudes = magnitude[peaks]
+
+print("Dominant Frequencies Detected (Hz):")
+for i, f in enumerate(dominant_freqs):
+    print(f"{i+1}: {f:.2f} Hz with amplitude {amplitudes[i]:.3f}")
+    
+# Plot
+plt.figure(figsize=(10, 5))
+plt.plot(freqs, magnitude, label='FFT Amplitude Spectrum')
+plt.plot(dominant_freqs, amplitudes, "rx", label='Peaks')
+for i, f in enumerate(dominant_freqs):
+    plt.text(f, amplitudes[i] + 0.05, f"{f:.1f} Hz", rotation=45, ha='center')
+
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Amplitude")
+plt.title("FFT of Lift Coefficient with Multiple Peaks")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
